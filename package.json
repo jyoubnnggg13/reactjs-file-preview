@@ -1,12 +1,11 @@
 {
   "name": "reactjs-file-preview",
   "private": false,
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "module",
-  "description": "A React file preview component",
+  "description": "Effortlessly preview images, videos, and PDFs in your React applications with MyFilePreview. This lightweight and customizable component intelligently detects file types and displays them.",
   "main": "dist/index.js",
   "module": "dist/index.js",
-  "types": "dist/types/index.d.ts",
   "files": [
     "dist"
   ],

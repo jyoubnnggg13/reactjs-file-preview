@@ -7,8 +7,8 @@ export default defineConfig({
   build: {
     lib: {
       entry: path.resolve(__dirname, "src/index.tsx"),
-      name: "MyFilePreview",
-      fileName: (format) => `my-file-preview.${format}.js`
+      name: "npmjs-file-preview",
+      fileName: 'index'
     },
     rollupOptions: {
       external: ["react", "react-dom"],

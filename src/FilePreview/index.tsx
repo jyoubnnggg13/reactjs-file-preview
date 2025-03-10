@@ -69,11 +69,11 @@ const FilePreview: React.FC<FilePreviewProps> = ({ preview, fileType, axiosInsta
         pdfData = new Uint8Array(arrayBuffer);
       }
 
-      const loadingTask = pdfjsLib.getDocument({ data: pdfData });
+      const loadingTask = pdfjsLib.getDocument({ data: pdfData, verbosity: pdfjsLib.VerbosityLevel.ERRORS });
       const pdf = await loadingTask.promise;
       const page = await pdf.getPage(1);
 
-      const desiredWidth = 180;
+      const desiredWidth = 10000;
       const viewport = page.getViewport({ scale: 1 });
       const scale = desiredWidth / viewport.width;
       const scaledViewport = page.getViewport({ scale });
@@ -92,24 +92,30 @@ const FilePreview: React.FC<FilePreviewProps> = ({ preview, fileType, axiosInsta
     }
   };
 
-  useEffect(() => {
+  const openInNewTab = (url: string) => {
+    if (url) {
+      window.open(url, "_blank", "noopener,noreferrer");
+    }
+  };
+
+  useEffect(() => { 
     if (resolvedType === "application/pdf") {
       generatePdfThumbnail(preview);
     }
   }, [preview, resolvedType]);
 
   return (
-    <div className="preview-box upload-box">
+    <>
       {resolvedType.startsWith("image") ? (
-        <img src={preview} alt="Preview" className="preview-image" />
+        <img src={preview} alt="Preview" className="preview-image" onClick={()=>openInNewTab(preview)}/>
       ) : resolvedType.startsWith("video") ? (
-        <video src={preview} controls className="preview-video" />
+        <video src={preview} controls className="preview-video" onClick={()=>openInNewTab(preview)}/>
       ) : resolvedType === "application/pdf" ? (
-        <img src={pdfThumbnail || preview} alt="PDF Preview" className="preview-image" />
+        <img src={pdfThumbnail || preview} alt="PDF Preview" className="preview-image" onClick={()=>openInNewTab(preview)}/>
       ) : (
         <span>Unsupported file type</span>
       )}
-    </div>
+    </>
   );
 };
 

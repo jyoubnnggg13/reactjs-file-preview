@@ -1,52 +1,35 @@
 import React, { useState, useEffect } from "react";
 import * as pdfjsLib from "pdfjs-dist";
 import "./styles.css";
+import { getFileType } from "../utils";
+import { FILE_TYPES, PDF_JS_LIB_SRC } from "../constant";
 
-pdfjsLib.GlobalWorkerOptions.workerSrc =
-  "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.worker.min.js";
+pdfjsLib.GlobalWorkerOptions.workerSrc = PDF_JS_LIB_SRC;
 
 interface FilePreviewProps {
   preview: string;
+  placeHolderImage?: string;
+  errorImage?: string;
   fileType?: string;
   axiosInstance?: any; // Using `any` as axiosInstance type (can be refined further)
 }
 
-const getFileType = async (
-  fileType: string | undefined,
-  preview: string,
-  axiosInstance: any = null
-): Promise<string> => {
-  if (fileType) return fileType;
-
-  try {
-    const url = new URL(preview);
-    const pathname = url.pathname.toLowerCase();
-
-    if (pathname.endsWith(".jpg") || pathname.endsWith(".jpeg") || pathname.endsWith(".png") || pathname.endsWith(".gif")|| pathname.endsWith(".webp")) {
-      return "image";
-    } else if (pathname.endsWith(".mp4") || pathname.endsWith(".webm") || pathname.endsWith(".ogg")) {
-      return "video";
-    } else if (pathname.endsWith(".pdf")) {
-      return "application/pdf";
-    }
-
-    const fetcher = axiosInstance ? axiosInstance.head : fetch;
-    const response = axiosInstance ? await fetcher(preview) : await fetcher(preview, { method: "HEAD" });
-    const contentType = axiosInstance ? response.headers["content-type"] : response.headers.get("Content-Type");
-
-    if (contentType.startsWith("image/")) return "image";
-    if (contentType.startsWith("video/")) return "video";
-    if (contentType === "application/pdf") return "application/pdf";
-  } catch (error) {
-    console.warn("Invalid URL or local file detected.", error);
-  }
-
-  return "unknown";
-};
-
-const FilePreview: React.FC<FilePreviewProps> = ({ preview, fileType, axiosInstance = null }) => {
+const FilePreview: React.FC<FilePreviewProps> = ({
+  preview,
+  placeHolderImage,
+  errorImage,
+  fileType,
+  axiosInstance = null,
+}) => {
   const [pdfThumbnail, setPdfThumbnail] = useState<string | null>(null);
-  const [resolvedType, setResolvedType] = useState<string>(fileType || "unknown");
+  const [resolvedType, setResolvedType] = useState<string>(fileType ?? "");
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    if (resolvedType === FILE_TYPES.PDF) {
+      generatePdfThumbnail(preview);
+    }
+  }, [preview, resolvedType]);
 
   useEffect(() => {
     const resolveType = async () => {
@@ -61,7 +44,9 @@ const FilePreview: React.FC<FilePreviewProps> = ({ preview, fileType, axiosInsta
     try {
       let pdfData: Uint8Array;
       if (axiosInstance) {
-        const response = await axiosInstance.get(pdfUrl, { responseType: "arraybuffer" });
+        const response = await axiosInstance.get(pdfUrl, {
+          responseType: "arraybuffer",
+        });
         pdfData = new Uint8Array(response.data);
       } else {
         const response = await fetch(pdfUrl);
@@ -69,7 +54,10 @@ const FilePreview: React.FC<FilePreviewProps> = ({ preview, fileType, axiosInsta
         pdfData = new Uint8Array(arrayBuffer);
       }
 
-      const loadingTask = pdfjsLib.getDocument({ data: pdfData, verbosity: pdfjsLib.VerbosityLevel.ERRORS });
+      const loadingTask = pdfjsLib.getDocument({
+        data: pdfData,
+        verbosity: pdfjsLib.VerbosityLevel.ERRORS,
+      });
       const pdf = await loadingTask.promise;
       const page = await pdf.getPage(1);
 
@@ -85,7 +73,8 @@ const FilePreview: React.FC<FilePreviewProps> = ({ preview, fileType, axiosInsta
       canvas.width = scaledViewport.width;
       canvas.height = scaledViewport.height;
 
-      await page.render({ canvasContext: ctx, viewport: scaledViewport }).promise;
+      await page.render({ canvasContext: ctx, viewport: scaledViewport })
+        .promise;
       setPdfThumbnail(canvas.toDataURL("image/png"));
     } catch (error) {
       console.error("Error generating PDF thumbnail:", error);
@@ -98,23 +87,80 @@ const FilePreview: React.FC<FilePreviewProps> = ({ preview, fileType, axiosInsta
     }
   };
 
-  useEffect(() => { 
-    if (resolvedType === "application/pdf") {
-      generatePdfThumbnail(preview);
+  function rendered() {
+    //Render complete
+    setIsLoading(false);
+  }
+
+  function startRender() {
+    //Rendering start
+    requestAnimationFrame(rendered);
+  }
+
+  function loaded() {
+    requestAnimationFrame(startRender);
+  }
+
+  function renderFile() {
+    if(!resolvedType) {
+      return null;
     }
-  }, [preview, resolvedType]);
+    else if (resolvedType === FILE_TYPES.IMAGE) {
+      return (
+        <img
+          // onLoad={() => setIsLoading(false)}
+          onLoad={loaded}
+          src={preview}
+          alt="Preview"
+          className={`preview-image ${isLoading ? "hidden" : ""}`} 
+          onClick={() => openInNewTab(preview)}
+        />
+      );
+    } else if (resolvedType === FILE_TYPES.VIDEO) {
+      return (
+        <video
+          onLoad={loaded}
+          // onLoad={() => setIsLoading(false)}
+          src={preview}
+          controls
+          className={`preview-video ${isLoading ? "hidden" : ""}`}
+          onClick={() => openInNewTab(preview)}
+        />
+      );
+    } else if (resolvedType === FILE_TYPES.PDF) {
+      return (
+        <img
+          onLoad={loaded}
+          // onLoad={() => setIsLoading(false)}
+          src={pdfThumbnail||preview}
+          alt="PDF Preview"
+          className={`preview-image ${isLoading ? "hidden" : ""}`}
+          onClick={() => openInNewTab(preview)}
+        />
+      );
+    } else if (errorImage) {
+      return (
+        <img src={errorImage} alt="errorImage" className="preview-image" />
+      );
+    } else {
+      return <span>Unsupported file type</span>;
+    }
+  }
+
+  if (!resolvedType && placeHolderImage) {
+    return (
+      <img src={placeHolderImage} alt="placeHolder" className="preview-image" />
+    );
+  }
+
+  console.log(isLoading)
 
   return (
     <>
-      {resolvedType.startsWith("image") ? (
-        <img src={preview} alt="Preview" className="preview-image" onClick={()=>openInNewTab(preview)}/>
-      ) : resolvedType.startsWith("video") ? (
-        <video src={preview} controls className="preview-video" onClick={()=>openInNewTab(preview)}/>
-      ) : resolvedType === "application/pdf" ? (
-        <img src={pdfThumbnail || preview} alt="PDF Preview" className="preview-image" onClick={()=>openInNewTab(preview)}/>
-      ) : (
-        <span>Unsupported file type</span>
-      )}
+      {renderFile()}
+      {isLoading ? <div className="skeleton">
+        <div className="skeleton-line"></div>
+      </div> : null}
     </>
   );
 };

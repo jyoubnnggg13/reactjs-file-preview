@@ -18,9 +18,14 @@ function App() {
     backgroundColor: "#f3f3f3",
   }}
 >
-  <FilePreview
-    preview="https://apis.zopper.com/media/0qG_CxosjaZF67vXDz0Sxg=="
-  />
+  {/* <FilePreview
+    preview="https://picsum.photos/200/300"
+  /> */}
+  <FilePreview 
+  preview="https://example.com/sample.jp"
+  placeHolderImage="https://example.com/placeholder.png"
+  errorImage="https://picsum.photos/200/300"
+/>
 </div>
 
   )

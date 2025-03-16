@@ -20,10 +20,10 @@ export const getFileType = async (
       return FILE_TYPES.PDF;
     }
 
-    const fetcher = axiosInstance ? axiosInstance.head : fetch;
+    const fetcher = axiosInstance ? axiosInstance.get : fetch;
     const response = axiosInstance
       ? await fetcher(preview)
-      : await fetcher(preview, { method: "HEAD" });
+      : await fetcher(preview, { method: "GET" });
     const contentType = axiosInstance
       ? response.headers["content-type"]
       : response.headers.get("Content-Type");

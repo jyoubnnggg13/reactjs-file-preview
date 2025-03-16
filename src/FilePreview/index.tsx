@@ -105,14 +105,14 @@ const FilePreview: React.FC<FilePreviewProps> = ({
     if(!resolvedType) {
       return null;
     }
-    else if (resolvedType === FILE_TYPES.IMAGE) {
+
+    if (resolvedType === FILE_TYPES.IMAGE) {
       return (
         <img
-          // onLoad={() => setIsLoading(false)}
           onLoad={loaded}
           src={preview}
           alt="Preview"
-          className={`preview-image ${isLoading ? "hidden" : ""}`} 
+          className={`preview-file ${isLoading ? "hidden" : ""}`}
           onClick={() => openInNewTab(preview)}
         />
       );
@@ -120,10 +120,9 @@ const FilePreview: React.FC<FilePreviewProps> = ({
       return (
         <video
           onLoad={loaded}
-          // onLoad={() => setIsLoading(false)}
           src={preview}
           controls
-          className={`preview-video ${isLoading ? "hidden" : ""}`}
+          className={`preview-file ${isLoading ? "hidden" : ""}`}
           onClick={() => openInNewTab(preview)}
         />
       );
@@ -131,17 +130,21 @@ const FilePreview: React.FC<FilePreviewProps> = ({
       return (
         <img
           onLoad={loaded}
-          // onLoad={() => setIsLoading(false)}
-          src={pdfThumbnail||preview}
+          src={pdfThumbnail || preview}
           alt="PDF Preview"
-          className={`preview-image ${isLoading ? "hidden" : ""}`}
+          className={`preview-file ${isLoading ? "hidden" : ""}`}
           onClick={() => openInNewTab(preview)}
         />
       );
-    } else if (errorImage) {
+    } else if (resolvedType === FILE_TYPES.UNKNOWN && errorImage) {
+      console.log("errorImage", errorImage);
       return (
-        <img src={errorImage} alt="errorImage" className="preview-image" />
-      );
+      <img
+        src={errorImage}
+        alt="errorImage"
+        className={`preview-file ${isLoading ? "hidden" : ""}`}
+        onLoad={() => setIsLoading(false)}
+      />);
     } else {
       return <span>Unsupported file type</span>;
     }
@@ -149,18 +152,18 @@ const FilePreview: React.FC<FilePreviewProps> = ({
 
   if (!resolvedType && placeHolderImage) {
     return (
-      <img src={placeHolderImage} alt="placeHolder" className="preview-image" />
+      <img src={placeHolderImage} alt="placeHolder" className="preview-file" />
     );
   }
-
-  console.log(isLoading)
 
   return (
     <>
       {renderFile()}
-      {isLoading ? <div className="skeleton">
-        <div className="skeleton-line"></div>
-      </div> : null}
+      {isLoading ? (
+        <div className="skeleton">
+          <div className="skeleton-line"></div>
+        </div>
+      ) : null}
     </>
   );
 };

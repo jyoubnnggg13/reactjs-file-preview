@@ -2,9 +2,14 @@ import { FILE_TYPES, SUPPORTED_EXTENSIONS } from "../constant";
 
 export const getFileType = async (
   fileType: string | undefined,
-  preview: string,
+  preview: string|File,
   axiosInstance: any = null
 ): Promise<string> => {
+
+  if(typeof preview === 'object' && preview instanceof File)
+    return preview.type.split('/')[1];
+
+
   if (fileType) return fileType;
 
   try {

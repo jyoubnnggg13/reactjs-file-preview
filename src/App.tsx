@@ -7,8 +7,8 @@ function App() {
 <div
   style={{
     position: "relative",
-    width: "500px",
-    height: "500px",
+    width: "150px",
+    height: "150px",
     border: "1px solid #ccc",
     borderRadius: "8px",
     overflow: "hidden",
@@ -18,14 +18,14 @@ function App() {
     backgroundColor: "#f3f3f3",
   }}
 >
-  {/* <FilePreview
+  <FilePreview
     preview="https://picsum.photos/200/300"
-  /> */}
-  <FilePreview 
+  />
+  {/* <FilePreview 
   preview="https://example.com/sample.jp"
   placeHolderImage="https://example.com/placeholder.png"
   errorImage="https://picsum.photos/200/300"
-/>
+/> */}
 </div>
 
   )

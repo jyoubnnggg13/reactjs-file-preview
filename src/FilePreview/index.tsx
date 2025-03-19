@@ -7,7 +7,7 @@ import { FILE_TYPES, PDF_JS_LIB_SRC } from "../constant";
 pdfjsLib.GlobalWorkerOptions.workerSrc = PDF_JS_LIB_SRC;
 
 interface FilePreviewProps {
-  preview: string;
+  preview: string|File;
   placeHolderImage?: string;
   errorImage?: string;
   fileType?: string;
@@ -21,15 +21,27 @@ const FilePreview: React.FC<FilePreviewProps> = ({
   fileType,
   axiosInstance = null,
 }) => {
+  const [fileUrl, setFileUrl] = useState<string>('');
   const [pdfThumbnail, setPdfThumbnail] = useState<string | null>(null);
   const [resolvedType, setResolvedType] = useState<string>(fileType ?? "");
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    if (resolvedType === FILE_TYPES.PDF) {
-      generatePdfThumbnail(preview);
+    // If preview is a File, create an object URL
+    if (preview instanceof File) {
+      const url = URL.createObjectURL(preview);
+      setFileUrl(url);
+      return () => URL.revokeObjectURL(url); // Cleanup on unmount
+    } else {
+      setFileUrl(preview);
     }
-  }, [preview, resolvedType]);
+  }, [preview]);
+
+  useEffect(() => {
+    if (resolvedType === FILE_TYPES.PDF) {
+      generatePdfThumbnail(fileUrl);
+    }
+  }, [fileUrl, resolvedType]);
 
   useEffect(() => {
     const resolveType = async () => {
@@ -76,7 +88,7 @@ const FilePreview: React.FC<FilePreviewProps> = ({
       await page.render({ canvasContext: ctx, viewport: scaledViewport })
         .promise;
       setPdfThumbnail(canvas.toDataURL("image/png"));
-    } catch (error) {
+   } catch (error) {
       console.error("Error generating PDF thumbnail:", error);
     }
   };
@@ -110,30 +122,30 @@ const FilePreview: React.FC<FilePreviewProps> = ({
       return (
         <img
           onLoad={loaded}
-          src={preview}
+          src={fileUrl}
           alt="Preview"
           className={`preview-file ${isLoading ? "hidden" : ""}`}
-          onClick={() => openInNewTab(preview)}
+          onClick={() => openInNewTab(fileUrl)}
         />
       );
     } else if (resolvedType === FILE_TYPES.VIDEO) {
       return (
         <video
           onLoad={loaded}
-          src={preview}
+          src={fileUrl}
           controls
           className={`preview-file ${isLoading ? "hidden" : ""}`}
-          onClick={() => openInNewTab(preview)}
+          onClick={() => openInNewTab(fileUrl)}
         />
       );
     } else if (resolvedType === FILE_TYPES.PDF) {
       return (
         <img
           onLoad={loaded}
-          src={pdfThumbnail || preview}
+          src={pdfThumbnail || fileUrl}
           alt="PDF Preview"
           className={`preview-file ${isLoading ? "hidden" : ""}`}
-          onClick={() => openInNewTab(preview)}
+          onClick={() => openInNewTab(fileUrl)}
         />
       );
     } else if (resolvedType === FILE_TYPES.UNKNOWN && errorImage) {

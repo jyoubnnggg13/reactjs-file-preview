@@ -6,22 +6,27 @@ export const getFileType = async (
   axiosInstance: any = null
 ): Promise<string> => {
 
-  if(typeof preview === 'object' && preview instanceof File)
-    return preview.type.split('/')[1];
-
 
   if (fileType) return fileType;
 
   try {
+
+    let extension;
+
+    if(typeof preview === 'object' && preview instanceof File)
+      extension= preview.type.split('/')[1];
+
+    else{
     const url = new URL(preview);
     const pathname = url.pathname.toLowerCase();
-    const extenstion = getFileExtension(pathname);
+    extension = getFileExtension(pathname);
+    }
 
-    if (SUPPORTED_EXTENSIONS.IMAGE.includes(extenstion)) {
+    if (SUPPORTED_EXTENSIONS.IMAGE.includes(extension)) {
       return FILE_TYPES.IMAGE;
-    } else if (SUPPORTED_EXTENSIONS.VIDEO.includes(extenstion)) {
+    } else if (SUPPORTED_EXTENSIONS.VIDEO.includes(extension)) {
       return FILE_TYPES.VIDEO;
-    } else if (SUPPORTED_EXTENSIONS.PDF.includes(extenstion)) {
+    } else if (SUPPORTED_EXTENSIONS.PDF.includes(extension)) {
       return FILE_TYPES.PDF;
     }
 

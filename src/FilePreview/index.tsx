@@ -11,7 +11,7 @@ interface FilePreviewProps {
   placeHolderImage?: string;
   errorImage?: string;
   fileType?: string;
-  axiosInstance?: any; // Using `any` as axiosInstance type (can be refined further)
+  axiosInstance?: any;
 }
 
 const FilePreview: React.FC<FilePreviewProps> = ({
@@ -73,7 +73,7 @@ const FilePreview: React.FC<FilePreviewProps> = ({
       const pdf = await loadingTask.promise;
       const page = await pdf.getPage(1);
 
-      const desiredWidth = 10000;
+      const desiredWidth = 100;
       const viewport = page.getViewport({ scale: 1 });
       const scale = desiredWidth / viewport.width;
       const scaledViewport = page.getViewport({ scale });
@@ -172,8 +172,8 @@ const FilePreview: React.FC<FilePreviewProps> = ({
     <>
       {renderFile()}
       {isLoading ? (
-        <div className="skeleton">
-          <div className="skeleton-line"></div>
+        <div className="loader-container">
+          <div className="loader"></div>
         </div>
       ) : null}
     </>

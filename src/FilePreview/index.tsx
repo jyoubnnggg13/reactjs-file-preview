@@ -8,6 +8,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = PDF_JS_LIB_SRC;
 
 interface FilePreviewProps {
   preview: string|File;
+  clarity?: number;
   placeHolderImage?: string;
   errorImage?: string;
   fileType?: string;
@@ -16,6 +17,7 @@ interface FilePreviewProps {
 
 const FilePreview: React.FC<FilePreviewProps> = ({
   preview,
+  clarity,
   placeHolderImage,
   errorImage,
   fileType,
@@ -73,7 +75,7 @@ const FilePreview: React.FC<FilePreviewProps> = ({
       const pdf = await loadingTask.promise;
       const page = await pdf.getPage(1);
 
-      const desiredWidth = 100;
+      const desiredWidth = clarity??1000;
       const viewport = page.getViewport({ scale: 1 });
       const scale = desiredWidth / viewport.width;
       const scaledViewport = page.getViewport({ scale });

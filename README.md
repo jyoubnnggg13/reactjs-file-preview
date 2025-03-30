@@ -86,6 +86,7 @@ const customAxios = axios.create({
 | Prop Name         | Type    | Required | Description |
 |------------------|---------|----------|-------------|
 | `preview`       | string  | ✅       | The URL or local path of the file to preview. |
+| `clarity` | string  | ❌       | Defines clarity of the file being previewed. Defaults to 1000. Higher the value, more the loading time of the file. |
 | `placeHolderImage` | string  | ❌       | URL of an image to display if no file is provided. |
 | `errorImage`    | string  | ❌       | URL of an image to display if the file fails to load. |
 | `fileType`      | string  | ❌       | Type of the file (`image`, `video`, `pdf`). If not provided, the type will be auto-detected. |

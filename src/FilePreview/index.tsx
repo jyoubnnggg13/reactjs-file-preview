@@ -65,7 +65,7 @@ const FilePreview: React.FC<FilePreviewProps> = ({
       let pdfData: Uint8Array;
       if (axiosInstance) {
         const response = await axiosInstance.get(pdfUrl, {
-          responseType: "blob",
+          responseType: "arraybuffer",
         });
         pdfData = new Uint8Array(response.data);
       } else {

@@ -7,7 +7,7 @@ import { FILE_TYPES, PDF_JS_LIB_SRC } from "../constant";
 pdfjsLib.GlobalWorkerOptions.workerSrc = PDF_JS_LIB_SRC;
 
 interface FilePreviewProps {
-  preview: string|File;
+  preview: string | File;
   clarity?: number;
   placeHolderImage?: string;
   errorImage?: string;
@@ -23,8 +23,11 @@ const FilePreview: React.FC<FilePreviewProps> = ({
   fileType,
   axiosInstance = null,
 }) => {
-  const [fileUrl, setFileUrl] = useState<string>('');
+  const [fileUrl, setFileUrl] = useState<string>("");
   const [pdfThumbnail, setPdfThumbnail] = useState<string | null>(null);
+  const [axiosImageThumbnail, setAxiosImageThumbnail] = useState<string | null>(
+    null
+  );
   const [resolvedType, setResolvedType] = useState<string>(fileType ?? "");
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
@@ -43,6 +46,9 @@ const FilePreview: React.FC<FilePreviewProps> = ({
     if (resolvedType === FILE_TYPES.PDF) {
       generatePdfThumbnail(fileUrl);
     }
+    if (resolvedType === FILE_TYPES.IMAGE) {
+      generateAxiosImageThumbnail(fileUrl);
+    }
   }, [fileUrl, resolvedType]);
 
   useEffect(() => {
@@ -59,7 +65,7 @@ const FilePreview: React.FC<FilePreviewProps> = ({
       let pdfData: Uint8Array;
       if (axiosInstance) {
         const response = await axiosInstance.get(pdfUrl, {
-          responseType: "arraybuffer",
+          responseType: "blob",
         });
         pdfData = new Uint8Array(response.data);
       } else {
@@ -75,7 +81,7 @@ const FilePreview: React.FC<FilePreviewProps> = ({
       const pdf = await loadingTask.promise;
       const page = await pdf.getPage(1);
 
-      const desiredWidth = clarity??1000;
+      const desiredWidth = clarity ?? 1000;
       const viewport = page.getViewport({ scale: 1 });
       const scale = desiredWidth / viewport.width;
       const scaledViewport = page.getViewport({ scale });
@@ -90,16 +96,30 @@ const FilePreview: React.FC<FilePreviewProps> = ({
       await page.render({ canvasContext: ctx, viewport: scaledViewport })
         .promise;
       setPdfThumbnail(canvas.toDataURL("image/png"));
-   } catch (error) {
+    } catch (error) {
       console.error("Error generating PDF thumbnail:", error);
     }
   };
 
-  const openInNewTab = (url: string) => {
-    if (url) {
-      window.open(url, "_blank", "noopener,noreferrer");
+  const generateAxiosImageThumbnail = async (imageUrl: string) => {
+    try {
+      const response = await axiosInstance.get(imageUrl, {
+        responseType: "blob",
+      });
+      const blob = new Blob([response.data], { type: "image/png" });
+      const url = URL.createObjectURL(blob);
+      setAxiosImageThumbnail(url);
+    } catch (error) {
+      console.error("Error generating image thumbnail:", error);
     }
   };
+
+  // block
+  // const openInNewTab = (url: string) => {
+  //   if (url) {
+  //     window.open(url, "_blank", "noopener,noreferrer");
+  //   }
+  // };
 
   function rendered() {
     //Render complete
@@ -116,7 +136,7 @@ const FilePreview: React.FC<FilePreviewProps> = ({
   }
 
   function renderFile() {
-    if(!resolvedType) {
+    if (!resolvedType) {
       return null;
     }
 
@@ -124,10 +144,10 @@ const FilePreview: React.FC<FilePreviewProps> = ({
       return (
         <img
           onLoad={loaded}
-          src={fileUrl}
+          src={axiosImageThumbnail || fileUrl}
           alt="Preview"
           className={`preview-file ${isLoading ? "hidden" : ""}`}
-          onClick={() => openInNewTab(fileUrl)}
+          // onClick={() => openInNewTab(fileUrl)}
         />
       );
     } else if (resolvedType === FILE_TYPES.VIDEO) {
@@ -137,7 +157,7 @@ const FilePreview: React.FC<FilePreviewProps> = ({
           src={fileUrl}
           controls
           className={`preview-file ${isLoading ? "hidden" : ""}`}
-          onClick={() => openInNewTab(fileUrl)}
+          // onClick={() => openInNewTab(fileUrl)}
         />
       );
     } else if (resolvedType === FILE_TYPES.PDF) {
@@ -147,18 +167,19 @@ const FilePreview: React.FC<FilePreviewProps> = ({
           src={pdfThumbnail || fileUrl}
           alt="PDF Preview"
           className={`preview-file ${isLoading ? "hidden" : ""}`}
-          onClick={() => openInNewTab(fileUrl)}
+          // onClick={() => openInNewTab(fileUrl)}
         />
       );
     } else if (resolvedType === FILE_TYPES.UNKNOWN && errorImage) {
       console.log("errorImage", errorImage);
       return (
-      <img
-        src={errorImage}
-        alt="errorImage"
-        className={`preview-file ${isLoading ? "hidden" : ""}`}
-        onLoad={() => setIsLoading(false)}
-      />);
+        <img
+          src={errorImage}
+          alt="errorImage"
+          className={`preview-file ${isLoading ? "hidden" : ""}`}
+          onLoad={() => setIsLoading(false)}
+        />
+      );
     } else {
       return <span>Unsupported file type</span>;
     }

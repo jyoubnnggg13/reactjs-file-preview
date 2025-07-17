@@ -46,10 +46,10 @@ const FilePreview: React.FC<FilePreviewProps> = ({
     if (resolvedType === FILE_TYPES.PDF) {
       generatePdfThumbnail(fileUrl);
     }
-    if (resolvedType === FILE_TYPES.IMAGE) {
+    if (resolvedType === FILE_TYPES.IMAGE && axiosInstance) {
       generateAxiosImageThumbnail(fileUrl);
     }
-  }, [fileUrl, resolvedType]);
+  }, [fileUrl, resolvedType, axiosInstance]);
 
   useEffect(() => {
     const resolveType = async () => {

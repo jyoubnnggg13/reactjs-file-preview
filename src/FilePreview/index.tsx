@@ -98,6 +98,7 @@ const FilePreview: React.FC<FilePreviewProps> = ({
       setPdfThumbnail(canvas.toDataURL("image/png"));
     } catch (error) {
       setIsLoading(false);
+      setResolvedType(FILE_TYPES.UNKNOWN);
       console.error("Error generating PDF thumbnail:", error);
     }
   };
@@ -112,6 +113,7 @@ const FilePreview: React.FC<FilePreviewProps> = ({
       setAxiosImageThumbnail(url);
     } catch (error) {
       setIsLoading(false);
+      setResolvedType(FILE_TYPES.UNKNOWN);
       console.error("Error generating image thumbnail:", error);
     }
   };

@@ -26,13 +26,13 @@ const FilePreview: React.FC<FilePreviewProps> = ({
   getLoader,
 }) => {
   const [fileUrl, setFileUrl] = useState<string>("");
-  const [isError, setIsError] = useState<boolean>(false);
   const [pdfThumbnail, setPdfThumbnail] = useState<string | null>(null);
   const [axiosImageThumbnail, setAxiosImageThumbnail] = useState<string | null>(
     null
   );
   const [resolvedType, setResolvedType] = useState<string>(fileType ?? "");
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isError, setIsError] = useState<boolean>(false);
 
   useEffect(() => {
     // If preview is a File, create an object URL
@@ -48,7 +48,7 @@ const FilePreview: React.FC<FilePreviewProps> = ({
   }, [preview]);
 
   useEffect(() => {
-    setIsError(false);
+    if (!fileUrl) return;
     if (resolvedType === FILE_TYPES.PDF) {
       generatePdfThumbnail(fileUrl);
     }
@@ -67,6 +67,7 @@ const FilePreview: React.FC<FilePreviewProps> = ({
   }, [preview, fileType, axiosInstance]);
 
   const generatePdfThumbnail = async (pdfUrl: string) => {
+    console.log(pdfUrl);
     try {
       let pdfData: Uint8Array;
       if (axiosInstance) {
@@ -102,10 +103,12 @@ const FilePreview: React.FC<FilePreviewProps> = ({
       await page.render({ canvasContext: ctx, viewport: scaledViewport })
         .promise;
       setPdfThumbnail(canvas.toDataURL("image/png"));
+      setIsError(false);
     } catch (error) {
-      setIsLoading(false);
       setIsError(true);
       console.error("Error generating PDF thumbnail:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -117,10 +120,13 @@ const FilePreview: React.FC<FilePreviewProps> = ({
       const blob = new Blob([response.data], { type: "image/png" });
       const url = URL.createObjectURL(blob);
       setAxiosImageThumbnail(url);
-    } catch (error) {
       setIsLoading(false);
+      setIsError(false);
+    } catch (error) {
       setIsError(true);
       console.error("Error generating image thumbnail:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -145,18 +151,52 @@ const FilePreview: React.FC<FilePreviewProps> = ({
     requestAnimationFrame(startRender);
   }
 
-  console.log(isError, isLoading, resolvedType, fileUrl);
+  const renderFile = () => {
+    if (resolvedType === FILE_TYPES.IMAGE) {
+      return (
+        <img
+          onLoad={loaded}
+          src={axiosImageThumbnail || fileUrl}
+          alt="Preview"
+          className={`preview-file ${isLoading ? "hidden" : ""}`}
+          // onClick={() => openInNewTab(fileUrl)}
+        />
+      );
+    } else if (resolvedType === FILE_TYPES.VIDEO) {
+      return (
+        <video
+          onLoad={loaded}
+          src={fileUrl}
+          controls
+          className={`preview-file ${isLoading ? "hidden" : ""}`}
+          // onClick={() => openInNewTab(fileUrl)}
+        />
+      );
+    } else if (resolvedType === FILE_TYPES.PDF) {
+      return (
+        <img
+          onLoad={loaded}
+          src={pdfThumbnail || fileUrl}
+          alt="PDF Preview"
+          className={`preview-file ${isLoading ? "hidden" : ""}`}
+          // onClick={() => openInNewTab(fileUrl)}
+        />
+      );
+    } else if (errorImage && resolvedType === FILE_TYPES.UNKNOWN) {
+      return (
+        <img
+          src={errorImage}
+          alt="errorImage"
+          className={`preview-file ${isLoading ? "hidden" : ""}`}
+          onLoad={() => setIsLoading(false)}
+        />
+      );
+    } else {
+      return <span>Unsupported file type</span>;
+    }
+  };
 
-  if (isLoading)
-    return getLoader ? (
-      getLoader()
-    ) : (
-      <div className="loader-container">
-        <div className="loader"></div>
-      </div>
-    );
-
-  if (isError)
+  if (!fileUrl)
     return (
       <img
         src={errorImage}
@@ -176,37 +216,7 @@ const FilePreview: React.FC<FilePreviewProps> = ({
     return null;
   }
 
-  if (resolvedType === FILE_TYPES.IMAGE) {
-    return (
-      <img
-        onLoad={loaded}
-        src={axiosImageThumbnail || fileUrl}
-        alt="Preview"
-        className={`preview-file ${isLoading ? "hidden" : ""}`}
-        // onClick={() => openInNewTab(fileUrl)}
-      />
-    );
-  } else if (resolvedType === FILE_TYPES.VIDEO) {
-    return (
-      <video
-        onLoad={loaded}
-        src={fileUrl}
-        controls
-        className={`preview-file ${isLoading ? "hidden" : ""}`}
-        // onClick={() => openInNewTab(fileUrl)}
-      />
-    );
-  } else if (resolvedType === FILE_TYPES.PDF) {
-    return (
-      <img
-        onLoad={loaded}
-        src={pdfThumbnail || fileUrl}
-        alt="PDF Preview"
-        className={`preview-file ${isLoading ? "hidden" : ""}`}
-        // onClick={() => openInNewTab(fileUrl)}
-      />
-    );
-  } else if (errorImage && resolvedType === FILE_TYPES.UNKNOWN) {
+  if (isError) {
     return (
       <img
         src={errorImage}
@@ -215,9 +225,19 @@ const FilePreview: React.FC<FilePreviewProps> = ({
         onLoad={() => setIsLoading(false)}
       />
     );
-  } else {
-    return <span>Unsupported file type</span>;
   }
+
+  return isLoading ? (
+    getLoader ? (
+      getLoader()
+    ) : (
+      <div className="loader-container">
+        <div className="loader"></div>
+      </div>
+    )
+  ) : (
+    renderFile()
+  );
 };
 
 export default FilePreview;

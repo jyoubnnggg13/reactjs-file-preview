@@ -48,13 +48,12 @@ const FilePreview: React.FC<FilePreviewProps> = ({
   }, [preview]);
 
   useEffect(() => {
+    setIsError(false);
     if (resolvedType === FILE_TYPES.PDF) {
       generatePdfThumbnail(fileUrl);
-      return;
     }
     if (resolvedType === FILE_TYPES.IMAGE && axiosInstance) {
       generateAxiosImageThumbnail(fileUrl);
-      return;
     }
   }, [fileUrl, resolvedType, axiosInstance]);
 
@@ -146,55 +145,26 @@ const FilePreview: React.FC<FilePreviewProps> = ({
     requestAnimationFrame(startRender);
   }
 
-  function renderFile() {
-    console.log("resolvedType", resolvedType);
-    if (!resolvedType) {
-      return null;
-    }
+  console.log(isError, isLoading, resolvedType, fileUrl);
 
-    if (resolvedType === FILE_TYPES.IMAGE) {
-      return (
-        <img
-          onLoad={loaded}
-          src={axiosImageThumbnail || fileUrl}
-          alt="Preview"
-          className={`preview-file ${isLoading ? "hidden" : ""}`}
-          // onClick={() => openInNewTab(fileUrl)}
-        />
-      );
-    } else if (resolvedType === FILE_TYPES.VIDEO) {
-      return (
-        <video
-          onLoad={loaded}
-          src={fileUrl}
-          controls
-          className={`preview-file ${isLoading ? "hidden" : ""}`}
-          // onClick={() => openInNewTab(fileUrl)}
-        />
-      );
-    } else if (resolvedType === FILE_TYPES.PDF) {
-      return (
-        <img
-          onLoad={loaded}
-          src={pdfThumbnail || fileUrl}
-          alt="PDF Preview"
-          className={`preview-file ${isLoading ? "hidden" : ""}`}
-          // onClick={() => openInNewTab(fileUrl)}
-        />
-      );
-    } else if (errorImage && (resolvedType === FILE_TYPES.UNKNOWN || isError)) {
-      return (
-        <img
-          src={errorImage}
-          alt="errorImage"
-          className={`preview-file ${isLoading ? "hidden" : ""}`}
-          onLoad={() => setIsLoading(false)}
-        />
-      );
-    } else {
-      return <span>Unsupported file type</span>;
-    }
-  }
+  if (isLoading)
+    return getLoader ? (
+      getLoader()
+    ) : (
+      <div className="loader-container">
+        <div className="loader"></div>
+      </div>
+    );
+
+  if (isError)
+    return (
+      <img
+        src={errorImage}
+        alt="errorImage"
+        className={`preview-file ${isLoading ? "hidden" : ""}`}
+        onLoad={() => setIsLoading(false)}
+      />
+    );
 
   if (!resolvedType && placeHolderImage) {
     return (
@@ -202,20 +172,52 @@ const FilePreview: React.FC<FilePreviewProps> = ({
     );
   }
 
-  return (
-    <>
-      {renderFile()}
-      {isLoading ? (
-        getLoader ? (
-          getLoader()
-        ) : (
-          <div className="loader-container">
-            <div className="loader"></div>
-          </div>
-        )
-      ) : null}
-    </>
-  );
+  if (!resolvedType) {
+    return null;
+  }
+
+  if (resolvedType === FILE_TYPES.IMAGE) {
+    return (
+      <img
+        onLoad={loaded}
+        src={axiosImageThumbnail || fileUrl}
+        alt="Preview"
+        className={`preview-file ${isLoading ? "hidden" : ""}`}
+        // onClick={() => openInNewTab(fileUrl)}
+      />
+    );
+  } else if (resolvedType === FILE_TYPES.VIDEO) {
+    return (
+      <video
+        onLoad={loaded}
+        src={fileUrl}
+        controls
+        className={`preview-file ${isLoading ? "hidden" : ""}`}
+        // onClick={() => openInNewTab(fileUrl)}
+      />
+    );
+  } else if (resolvedType === FILE_TYPES.PDF) {
+    return (
+      <img
+        onLoad={loaded}
+        src={pdfThumbnail || fileUrl}
+        alt="PDF Preview"
+        className={`preview-file ${isLoading ? "hidden" : ""}`}
+        // onClick={() => openInNewTab(fileUrl)}
+      />
+    );
+  } else if (errorImage && resolvedType === FILE_TYPES.UNKNOWN) {
+    return (
+      <img
+        src={errorImage}
+        alt="errorImage"
+        className={`preview-file ${isLoading ? "hidden" : ""}`}
+        onLoad={() => setIsLoading(false)}
+      />
+    );
+  } else {
+    return <span>Unsupported file type</span>;
+  }
 };
 
 export default FilePreview;

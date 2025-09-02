@@ -26,6 +26,7 @@ const FilePreview: React.FC<FilePreviewProps> = ({
   getLoader,
 }) => {
   const [fileUrl, setFileUrl] = useState<string>("");
+  const [isError, setIsError] = useState<boolean>(false);
   const [pdfThumbnail, setPdfThumbnail] = useState<string | null>(null);
   const [axiosImageThumbnail, setAxiosImageThumbnail] = useState<string | null>(
     null
@@ -104,7 +105,7 @@ const FilePreview: React.FC<FilePreviewProps> = ({
       setPdfThumbnail(canvas.toDataURL("image/png"));
     } catch (error) {
       setIsLoading(false);
-      setResolvedType(FILE_TYPES.UNKNOWN);
+      setIsError(true);
       console.error("Error generating PDF thumbnail:", error);
     }
   };
@@ -119,7 +120,7 @@ const FilePreview: React.FC<FilePreviewProps> = ({
       setAxiosImageThumbnail(url);
     } catch (error) {
       setIsLoading(false);
-      setResolvedType(FILE_TYPES.UNKNOWN);
+      setIsError(true);
       console.error("Error generating image thumbnail:", error);
     }
   };
@@ -181,7 +182,7 @@ const FilePreview: React.FC<FilePreviewProps> = ({
           // onClick={() => openInNewTab(fileUrl)}
         />
       );
-    } else if (resolvedType === FILE_TYPES.UNKNOWN && errorImage) {
+    } else if (errorImage && (resolvedType === FILE_TYPES.UNKNOWN || isError)) {
       return (
         <img
           src={errorImage}

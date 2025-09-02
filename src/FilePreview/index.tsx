@@ -97,6 +97,7 @@ const FilePreview: React.FC<FilePreviewProps> = ({
         .promise;
       setPdfThumbnail(canvas.toDataURL("image/png"));
     } catch (error) {
+      setIsLoading(false);
       console.error("Error generating PDF thumbnail:", error);
     }
   };
@@ -110,6 +111,7 @@ const FilePreview: React.FC<FilePreviewProps> = ({
       const url = URL.createObjectURL(blob);
       setAxiosImageThumbnail(url);
     } catch (error) {
+      setIsLoading(false);
       console.error("Error generating image thumbnail:", error);
     }
   };

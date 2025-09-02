@@ -13,6 +13,7 @@ interface FilePreviewProps {
   errorImage?: string;
   fileType?: string;
   axiosInstance?: any;
+  getLoader?: () => React.ReactNode;
 }
 
 const FilePreview: React.FC<FilePreviewProps> = ({
@@ -22,6 +23,7 @@ const FilePreview: React.FC<FilePreviewProps> = ({
   errorImage,
   fileType,
   axiosInstance = null,
+  getLoader,
 }) => {
   const [fileUrl, setFileUrl] = useState<string>("");
   const [pdfThumbnail, setPdfThumbnail] = useState<string | null>(null);
@@ -33,11 +35,13 @@ const FilePreview: React.FC<FilePreviewProps> = ({
 
   useEffect(() => {
     // If preview is a File, create an object URL
+    if (!preview) return;
     if (preview instanceof File) {
       const url = URL.createObjectURL(preview);
       setFileUrl(url);
       return () => URL.revokeObjectURL(url); // Cleanup on unmount
-    } else {
+    } else if (typeof preview === "string") {
+      if (preview.length < 1) return;
       setFileUrl(preview);
     }
   }, [preview]);
@@ -45,9 +49,11 @@ const FilePreview: React.FC<FilePreviewProps> = ({
   useEffect(() => {
     if (resolvedType === FILE_TYPES.PDF) {
       generatePdfThumbnail(fileUrl);
+      return;
     }
     if (resolvedType === FILE_TYPES.IMAGE && axiosInstance) {
       generateAxiosImageThumbnail(fileUrl);
+      return;
     }
   }, [fileUrl, resolvedType, axiosInstance]);
 
@@ -140,6 +146,7 @@ const FilePreview: React.FC<FilePreviewProps> = ({
   }
 
   function renderFile() {
+    console.log("resolvedType", resolvedType);
     if (!resolvedType) {
       return null;
     }
@@ -175,7 +182,6 @@ const FilePreview: React.FC<FilePreviewProps> = ({
         />
       );
     } else if (resolvedType === FILE_TYPES.UNKNOWN && errorImage) {
-      console.log("errorImage", errorImage);
       return (
         <img
           src={errorImage}
@@ -199,9 +205,13 @@ const FilePreview: React.FC<FilePreviewProps> = ({
     <>
       {renderFile()}
       {isLoading ? (
-        <div className="loader-container">
-          <div className="loader"></div>
-        </div>
+        getLoader ? (
+          getLoader()
+        ) : (
+          <div className="loader-container">
+            <div className="loader"></div>
+          </div>
+        )
       ) : null}
     </>
   );
